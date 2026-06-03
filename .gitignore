@@ -1,0 +1,25 @@
+# Environment
+.env
+**/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Frontend
+frontend/node_modules/
+
+# Chroma (local vector store)
+backend/data/chroma/
+**/chroma/
+**/chroma_data/
+backend/.env
+
+# Build output
+frontend/dist/
+
+# OS
+.DS_Store
