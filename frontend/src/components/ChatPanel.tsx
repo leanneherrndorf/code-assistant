@@ -11,12 +11,9 @@ export function ChatPanel({ repo }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const latestUserMsgRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
 
   const runQuery = async (question: string, repoInfo: RepoInfo) => {
@@ -38,6 +35,11 @@ export function ChatPanel({ repo }: Props) {
     };
 
     setMessages((prev) => [...prev, userMsg, assistantMsg]);
+
+    // Scroll to the new user message so the response streams into view from the top
+    requestAnimationFrame(() => {
+      latestUserMsgRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
 
     try {
       await queryRepo(
@@ -93,15 +95,19 @@ export function ChatPanel({ repo }: Props) {
   return (
     <div className="flex flex-col flex-1 min-h-0">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-4">
         {messages.length === 0 ? (
           <EmptyState hasRepo={!!repo} />
         ) : (
-          <div className="flex flex-col gap-6 max-w-3xl mx-auto">
-            {messages.map((msg) => (
-              <MessageBubble key={msg.id} message={msg} />
-            ))}
-            <div ref={bottomRef} />
+          <div className="flex flex-col gap-6 max-w-3xl mx-auto pb-4">
+            {messages.map((msg, i) => {
+              const isLatestUser = msg.role === "user" && i === messages.length - 2;
+              return (
+                <div key={msg.id} ref={isLatestUser ? latestUserMsgRef : undefined}>
+                  <MessageBubble message={msg} />
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -122,7 +128,7 @@ export function ChatPanel({ repo }: Props) {
               }
               disabled={!repo || isLoading}
               rows={1}
-              className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-500 disabled:opacity-40 resize-none"
+              className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-500 disabled:opacity-40 resize-none overflow-hidden"
               style={{ minHeight: "44px", maxHeight: "160px" }}
               onInput={(e) => {
                 const el = e.currentTarget;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import type { RepoInfo } from "./types";
 import { IngestPanel } from "./components/IngestPanel";
 import { ChatPanel } from "./components/ChatPanel";
@@ -18,6 +18,34 @@ export default function App() {
     setRepo(info);
     localStorage.setItem("last_repo", JSON.stringify(info));
   };
+
+  const [overviewHeight, setOverviewHeight] = useState(240);
+  const isDragging = useRef(false);
+  const dragStartY = useRef(0);
+  const dragStartHeight = useRef(0);
+
+  const onDragStart = useCallback((e: React.MouseEvent) => {
+    isDragging.current = true;
+    dragStartY.current = e.clientY;
+    dragStartHeight.current = overviewHeight;
+    document.body.style.cursor = "row-resize";
+    document.body.style.userSelect = "none";
+
+    const onMove = (e: MouseEvent) => {
+      if (!isDragging.current) return;
+      const delta = e.clientY - dragStartY.current;
+      setOverviewHeight(Math.max(80, Math.min(500, dragStartHeight.current + delta)));
+    };
+    const onUp = () => {
+      isDragging.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }, [overviewHeight]);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -61,7 +89,13 @@ export default function App() {
           </div>
         )}
 
-        <RepoOverview repo={repo} />
+        <RepoOverview repo={repo} height={repo ? overviewHeight : 0} />
+        {repo && (
+          <div
+            onMouseDown={onDragStart}
+            className="h-1 cursor-row-resize bg-zinc-800 hover:bg-zinc-600 transition-colors shrink-0"
+          />
+        )}
         <ChatPanel repo={repo} />
       </main>
     </div>

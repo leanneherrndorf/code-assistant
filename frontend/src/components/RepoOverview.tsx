@@ -4,6 +4,7 @@ import { queryRepo } from "../api";
 
 interface Props {
   repo: RepoInfo | null;
+  height?: number;
 }
 
 const SUMMARY_PROMPT =
@@ -15,7 +16,7 @@ const SUMMARY_PROMPT =
   "API endpoints\n" +
   "List every exposed API endpoint with its HTTP method, path, and a one-line description. If there are none, say so.";
 
-export function RepoOverview({ repo }: Props) {
+export function RepoOverview({ repo, height }: Props) {
   const [content, setContent] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -58,7 +59,7 @@ export function RepoOverview({ repo }: Props) {
   if (!repo) return null;
 
   return (
-    <div className="border-b border-zinc-800">
+    <div className="border-b border-zinc-800 shrink-0" style={height ? { height } : {}}>
       <button
         onClick={() => setIsCollapsed((c) => !c)}
         className="w-full flex items-center justify-between px-6 py-3 text-left hover:bg-zinc-900/40 transition-colors"
@@ -82,7 +83,7 @@ export function RepoOverview({ repo }: Props) {
       </button>
 
       {!isCollapsed && (
-        <div className="px-6 pb-5 max-h-72 overflow-y-auto">
+        <div className="px-6 pb-5 overflow-y-auto" style={height ? { height: height - 40 } : {}}>
           {error ? (
             <p className="text-xs text-red-400">{error}</p>
           ) : content ? (
