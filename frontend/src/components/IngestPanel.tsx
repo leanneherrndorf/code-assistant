@@ -4,10 +4,12 @@ import { ingestRepo } from "../api";
 
 interface Props {
   onRepoReady: (info: RepoInfo) => void;
+  onSelectRepo: (info: RepoInfo) => void;
   currentRepo: RepoInfo | null;
+  loadedRepos: RepoInfo[];
 }
 
-export function IngestPanel({ onRepoReady, currentRepo }: Props) {
+export function IngestPanel({ onRepoReady, onSelectRepo, currentRepo, loadedRepos }: Props) {
   const [url, setUrl] = useState("");
   const [status, setStatus] = useState<IngestStatus>({ phase: "idle" });
 
@@ -123,17 +125,38 @@ export function IngestPanel({ onRepoReady, currentRepo }: Props) {
         </StatusCard>
       )}
 
-      {/* Example queries hint */}
-      {status.phase === "done" && (
+      {/* Loaded repos */}
+      {loadedRepos.length > 0 && (
         <div className="mt-2">
-          <p className="text-xs text-zinc-500 mb-2">Try asking:</p>
-          <ul className="flex flex-col gap-1">
-            {EXAMPLE_QUESTIONS.map((q) => (
-              <li key={q} className="text-xs text-zinc-400 leading-relaxed">
-                &ldquo;{q}&rdquo;
-              </li>
-            ))}
-          </ul>
+          <p className="text-xs text-zinc-600 mb-2">Loaded repos</p>
+          <div className="flex flex-col gap-1">
+            {loadedRepos.map((r, i) => {
+              const isActive = r.repo_id === currentRepo?.repo_id;
+              const label = r.github_url.replace("https://github.com/", "");
+              const [owner, name] = label.split("/");
+              const color = REPO_COLORS[i % REPO_COLORS.length];
+              return (
+                <button
+                  key={r.repo_id}
+                  type="button"
+                  onClick={() => onSelectRepo(r)}
+                  disabled={isLoading}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors disabled:opacity-40 ${
+                    isActive ? "bg-zinc-800/80" : "hover:bg-zinc-900"
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? color.dot : "bg-zinc-700"}`} />
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-baseline gap-1.5 min-w-0">
+                      <span className="text-xs text-zinc-500 shrink-0">{owner}/</span>
+                      <span className={`text-xs font-medium truncate ${isActive ? color.text : "text-zinc-400"}`}>{name}</span>
+                    </div>
+                    <span className="text-xs text-zinc-700">{r.chunks.toLocaleString()} chunks</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
@@ -173,6 +196,15 @@ function Spinner() {
     </svg>
   );
 }
+
+const REPO_COLORS = [
+  { dot: "bg-blue-400",   text: "text-blue-300"   },
+  { dot: "bg-violet-400", text: "text-violet-300"  },
+  { dot: "bg-emerald-400",text: "text-emerald-300" },
+  { dot: "bg-amber-400",  text: "text-amber-300"   },
+  { dot: "bg-rose-400",   text: "text-rose-300"    },
+  { dot: "bg-cyan-400",   text: "text-cyan-300"    },
+];
 
 const SAMPLE_REPOS = [
   { label: "flask", url: "https://github.com/pallets/flask" },

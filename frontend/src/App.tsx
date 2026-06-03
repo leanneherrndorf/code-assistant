@@ -14,7 +14,37 @@ export default function App() {
     }
   });
 
+  const [loadedRepos, setLoadedRepos] = useState<RepoInfo[]>(() => {
+    try {
+      const saved = localStorage.getItem("loaded_repos");
+      const list: RepoInfo[] = saved ? JSON.parse(saved) : [];
+      // Seed from last_repo if list is missing it
+      const lastRepo = localStorage.getItem("last_repo");
+      if (lastRepo) {
+        const parsed: RepoInfo = JSON.parse(lastRepo);
+        if (!list.find((r) => r.repo_id === parsed.repo_id)) {
+          const seeded = [parsed, ...list];
+          localStorage.setItem("loaded_repos", JSON.stringify(seeded));
+          return seeded;
+        }
+      }
+      return list;
+    } catch {
+      return [];
+    }
+  });
+
   const handleRepoReady = (info: RepoInfo) => {
+    setRepo(info);
+    localStorage.setItem("last_repo", JSON.stringify(info));
+    setLoadedRepos((prev) => {
+      const updated = [info, ...prev.filter((r) => r.repo_id !== info.repo_id)];
+      localStorage.setItem("loaded_repos", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const handleSelectRepo = (info: RepoInfo) => {
     setRepo(info);
     localStorage.setItem("last_repo", JSON.stringify(info));
   };
@@ -63,7 +93,7 @@ export default function App() {
 
         {/* Ingest panel */}
         <div className="flex-1 overflow-y-auto px-5 py-5">
-          <IngestPanel onRepoReady={handleRepoReady} currentRepo={repo} />
+          <IngestPanel onRepoReady={handleRepoReady} onSelectRepo={handleSelectRepo} currentRepo={repo} loadedRepos={loadedRepos} />
         </div>
 
         {/* Footer */}

@@ -29,12 +29,22 @@ export function RepoOverview({ repo, height }: Props) {
       return;
     }
 
+    // Restore from cache if available
+    const cacheKey = `overview_${repo.repo_id}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      setContent(cached);
+      setIsStreaming(false);
+      return;
+    }
+
     setContent("");
     setError(null);
     setIsStreaming(true);
     setIsCollapsed(false);
 
     const controller = new AbortController();
+    let accumulated = "";
 
     (async () => {
       try {
@@ -42,9 +52,13 @@ export function RepoOverview({ repo, height }: Props) {
           SUMMARY_PROMPT,
           repo.repo_id,
           () => {},
-          (token) => setContent((prev) => prev + token),
+          (token) => {
+            accumulated += token;
+            setContent((prev) => prev + token);
+          },
           controller.signal
         );
+        localStorage.setItem(cacheKey, accumulated);
       } catch (e) {
         if ((e as Error).name === "AbortError") return;
         setError(e instanceof Error ? e.message : String(e));
