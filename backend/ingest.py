@@ -64,65 +64,37 @@ async def ingest_repo(github_url: str) -> AsyncGenerator[dict, None]:
         )
         _collections[repo_id] = collection
 
-        UPSERT_BATCH = 100
+        # Read + chunk all files concurrently, overlapping I/O across files
+        yield {"type": "status", "message": "Reading and chunking files..."}
+        file_chunk_results = await asyncio.gather(
+            *[_read_and_chunk(abs_path, rel_path, repo_id) for abs_path, rel_path in files]
+        )
 
-        total_chunks = 0
-        batch_docs: list[str] = []
-        batch_metas: list[dict] = []
-        batch_ids: list[str] = []
+        # Flatten into a single list of (doc, meta, id) tuples
+        all_entries: list[tuple[str, dict, str]] = [
+            entry for file_entries in file_chunk_results for entry in file_entries
+        ]
+        total_chunks = len(all_entries)
 
-        async def flush_batch():
-            if batch_docs:
-                await asyncio.to_thread(
-                    collection.upsert,
-                    documents=batch_docs[:],
-                    metadatas=batch_metas[:],
-                    ids=batch_ids[:],
-                )
-                batch_docs.clear()
-                batch_metas.clear()
-                batch_ids.clear()
+        # Embed and upsert in batches
+        UPSERT_BATCH = 200
+        processed_files = sum(1 for r in file_chunk_results if r)
 
-        for i, (abs_path, rel_path) in enumerate(files):
-            try:
-                content = abs_path.read_text(encoding="utf-8", errors="replace")
-            except Exception:
-                continue
-
-            if len(content.encode("utf-8")) > MAX_FILE_SIZE_BYTES:
-                continue
-
-            chunks = chunk_file(str(abs_path), content, rel_path)
-            if not chunks:
-                continue
-
-            for c in chunks:
-                batch_docs.append(c.content)
-                batch_metas.append({
-                    "file_path": c.file_path,
-                    "start_line": c.start_line,
-                    "end_line": c.end_line,
-                    "language": c.language,
-                    "name": c.name or "",
-                })
-                batch_ids.append(
-                    f"{repo_id}_{hashlib.md5((c.file_path + str(c.start_line)).encode()).hexdigest()}"
-                )
-
-            total_chunks += len(chunks)
-
-            if len(batch_docs) >= UPSERT_BATCH:
-                await flush_batch()
-
-            if (i + 1) % 10 == 0 or (i + 1) == len(files):
-                yield {
-                    "type": "progress",
-                    "processed": i + 1,
-                    "total": len(files),
-                    "chunks": total_chunks,
-                }
-
-        await flush_batch()  # flush any remaining
+        for batch_start in range(0, total_chunks, UPSERT_BATCH):
+            batch = all_entries[batch_start:batch_start + UPSERT_BATCH]
+            docs, metas, ids = zip(*batch)
+            await asyncio.to_thread(
+                collection.upsert,
+                documents=list(docs),
+                metadatas=list(metas),
+                ids=list(ids),
+            )
+            yield {
+                "type": "progress",
+                "processed": processed_files,
+                "total": len(files),
+                "chunks": min(batch_start + UPSERT_BATCH, total_chunks),
+            }
 
         yield {
             "type": "done",
@@ -136,6 +108,36 @@ async def ingest_repo(github_url: str) -> AsyncGenerator[dict, None]:
         yield {"type": "error", "message": str(e)}
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+async def _read_and_chunk(abs_path: Path, rel_path: str, repo_id: str) -> list[tuple[str, dict, str]]:
+    """Read, size-check, and chunk a single file concurrently. Returns (doc, meta, id) tuples."""
+    try:
+        content = await asyncio.to_thread(abs_path.read_text, encoding="utf-8", errors="replace")
+    except Exception:
+        return []
+
+    if len(content.encode("utf-8")) > MAX_FILE_SIZE_BYTES:
+        return []
+
+    chunks = await asyncio.to_thread(chunk_file, str(abs_path), content, rel_path)
+    if not chunks:
+        return []
+
+    return [
+        (
+            c.content,
+            {
+                "file_path": c.file_path,
+                "start_line": c.start_line,
+                "end_line": c.end_line,
+                "language": c.language,
+                "name": c.name or "",
+            },
+            f"{repo_id}_{hashlib.md5((c.file_path + str(c.start_line)).encode()).hexdigest()}",
+        )
+        for c in chunks
+    ]
 
 
 def _clone_repo(url: str, dest: str) -> None:

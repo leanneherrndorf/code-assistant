@@ -70,6 +70,8 @@ SKIP_DIRS = {
     ".git", "node_modules", "__pycache__", ".venv", "venv", "env",
     "dist", "build", ".next", ".nuxt", "coverage", ".pytest_cache",
     ".mypy_cache", ".tox", "vendor", "third_party",
+    "docs", "doc", "tests", "test", "examples", "example",
+    "benchmarks", "migrations", "fixtures", "locale", "locales",
 }
 SKIP_EXTENSIONS = {
     ".min.js", ".min.css", ".map", ".lock", ".sum",
@@ -77,6 +79,7 @@ SKIP_EXTENSIONS = {
     ".pdf", ".zip", ".tar", ".gz", ".whl", ".egg",
     ".pyc", ".pyo", ".class", ".jar", ".war",
     ".ttf", ".woff", ".woff2", ".eot",
+    ".rst", ".txt", ".csv", ".tsv", ".xml", ".yaml", ".yml",
 }
 
 
