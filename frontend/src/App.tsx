@@ -49,7 +49,7 @@ export default function App() {
     localStorage.setItem("last_repo", JSON.stringify(info));
   };
 
-  const [overviewHeight, setOverviewHeight] = useState(240);
+  const [overviewHeight, setOverviewHeight] = useState(360);
   const isDragging = useRef(false);
   const dragStartY = useRef(0);
   const dragStartHeight = useRef(0);
@@ -119,14 +119,14 @@ export default function App() {
           </div>
         )}
 
-        <RepoOverview repo={repo} height={repo ? overviewHeight : 0} />
+        <RepoOverview key={`overview-${repo?.repo_id}`} repo={repo} height={repo ? overviewHeight : 0} />
         {repo && (
           <div
             onMouseDown={onDragStart}
             className="h-1 cursor-row-resize bg-zinc-800 hover:bg-zinc-600 transition-colors shrink-0"
           />
         )}
-        <ChatPanel repo={repo} />
+        <ChatPanel key={`chat-${repo?.repo_id}`} repo={repo} />
       </main>
     </div>
   );

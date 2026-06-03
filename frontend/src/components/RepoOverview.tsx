@@ -8,11 +8,15 @@ interface Props {
 }
 
 const SUMMARY_PROMPT =
-  "Give a concise structured overview of this repository. Use exactly these three sections with these headings:\n\n" +
+  "Give a concise structured overview of this repository. Use exactly these five sections with these headings:\n\n" +
   "Overview\n" +
   "A 2-3 sentence description of what the project does and who it's for.\n\n" +
   "Languages & frameworks\n" +
   "List the main programming languages and frameworks used, referencing key files.\n\n" +
+  "Dependencies\n" +
+  "List the key external dependencies (from package.json, requirements.txt, go.mod, Cargo.toml, or similar). Group by runtime vs dev if relevant. Keep it concise.\n\n" +
+  "Entry points\n" +
+  "Describe how to run the project — the main entry file(s), start commands, and any required environment variables or config.\n\n" +
   "API endpoints\n" +
   "List every exposed API endpoint with its HTTP method, path, and a one-line description. If there are none, say so.";
 
@@ -204,7 +208,7 @@ function InlineMarkdown({ text, githubUrl }: { text: string; githubUrl: string }
 }
 
 function parseSections(text: string): { heading: string; body: string }[] {
-  const knownHeadings = ["Overview", "Languages & frameworks", "API endpoints"];
+  const knownHeadings = ["Overview", "Languages & frameworks", "Dependencies", "Entry points", "API endpoints"];
   const sections: { heading: string; body: string }[] = [];
 
   let remaining = text;

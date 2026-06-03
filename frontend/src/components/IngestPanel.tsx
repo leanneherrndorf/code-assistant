@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { IngestStatus, RepoInfo } from "../types";
 import { ingestRepo } from "../api";
 
@@ -28,10 +28,12 @@ export function IngestPanel({ onRepoReady, onSelectRepo, currentRepo, loadedRepo
     }
   };
 
-  // Sync done state up to parent
-  if (status.phase === "done" && status.info.repo_id !== currentRepo?.repo_id) {
-    onRepoReady(status.info);
-  }
+  useEffect(() => {
+    if (status.phase === "done") {
+      onRepoReady(status.info);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status.phase]);
 
   const isLoading = status.phase === "cloning" || status.phase === "processing";
 
