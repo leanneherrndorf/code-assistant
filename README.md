@@ -94,13 +94,14 @@ code-assistant/
     │   ├── api.ts                  # SSE streaming client for ingest and query
     │   ├── types.ts                # Shared TypeScript types
     │   └── components/
-    │       ├── IngestPanel.tsx     # Repo URL input and ingestion progress
+    │       ├── IngestPanel.tsx     # Repo URL input, ingestion progress, loaded repos
+    │       ├── RepoOverview.tsx    # Auto-generated repo summary panel (cached)
     │       ├── ChatPanel.tsx       # Chat interface with streaming output
     │       └── SourceDrawer.tsx    # Expandable source chunk viewer
     └── package.json
 ```
 
-**Backend:** Python, FastAPI, ChromaDB (in-memory), tree-sitter, Anthropic SDK
+**Backend:** Python, FastAPI, ChromaDB (persistent), tree-sitter, Anthropic SDK
 **Frontend:** React 18, TypeScript, Vite, Tailwind CSS
 
 Both the ingest and query endpoints use Server-Sent Events (SSE) for real-time streaming. The Vite dev server proxies `/api/*` to the backend at `localhost:8000`.
@@ -145,9 +146,11 @@ The backend would have unit tests, integration tests for the ingest pipeline aga
 
 Structured logging, distributed tracing, and metrics would cover the full request path across the API and worker layers. The most important metrics to monitor for a RAG system are embedding throughput, retrieval latency, chunk hit rate, and Claude API cost per query. Query logging could be added (storing what users asked and chunks retrieved) to allow offline retrieval quality audits.
 
-
-
 ## Technical Decisions & Engineering standards
+
+This project follows clean separation of concerns across backend and frontend. On the backend, ingestion, chunking, retrieval and API layers are isolated to their own modules. On the frontend, ingest, overview, chat, and sources are self contained in their own component. Typescript is used throughout for type safety. Repo metadata and the generated overview are persisted to localStorage, allowing data to persist on page reloads, prevent re-querying for overview, and avoiding a database dependency (for a prototype version). Streaming is used on ingest and query paths using SSE, creating a responsive user experience.
+
+With additional time, more robust error handling and edge case testing would be added. Also hybrid search combining vector similarity with BM25 keyword search would be explored, to help for exact identifier lookups where semantic search underperforms.
 
 ## AI Tools and Development Process
 
