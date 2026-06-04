@@ -216,9 +216,3 @@ const SAMPLE_REPOS = [
   { label: "rich", url: "https://github.com/Textualize/rich" },
 ];
 
-const EXAMPLE_QUESTIONS = [
-  "How does authentication work?",
-  "Where are API endpoints defined?",
-  "What does the main entry point do?",
-  "How is error handling structured?",
-];

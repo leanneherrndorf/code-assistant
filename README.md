@@ -26,7 +26,7 @@ A RAG-powered chat interface for exploring GitHub repositories. Add a public Git
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/your-username/code-assistant.git
+git clone https://github.com/leanneherrndorf/code-assistant.git
 cd code-assistant
 ```
 
@@ -128,7 +128,7 @@ Another enhancement would be incremental ingestion to avoid re-embedding unchang
 
 ### Deployment & Containerization
 
-The backend would be split into three independently deployable services: the FastAPI API layer, Celery embedding workers, and the vector store (pgvector on Postgres or a Pinecone). Each would be containerized with Docker and orchestrated via Kubernetes, which allows autoscaling embedding workers based on job queue depth, independently of the API layer. 
+The backend would be split into three independently deployable services: the FastAPI API layer, Celery embedding workers, and the vector store (pgvector on Postgres or a Pinecone). Each would be containerized with Docker and orchestrated via Kubernetes, which allows autoscaling embedding workers based on job queue depth, independently of the API layer. API endpoints would be protected with token-based auth to prevent unauthorized access.
 
 The frontend would be a static build deployed to a CDN to keep it decoupled from the backend. Secrets and environment config would be managed via AWS Secrets Manager or Vault rather than a local `.env` file.
 
