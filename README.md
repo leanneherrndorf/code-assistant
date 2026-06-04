@@ -5,6 +5,8 @@ A RAG-powered chat interface for exploring GitHub repositories. Add a public Git
 
 ---
 
+<img width="1301" height="896" alt="Screenshot 2026-06-03 at 7 51 00 PM" src="https://github.com/user-attachments/assets/4e732d78-552b-4c16-a008-41e055fd9a58" />
+
 ## How it works
 
 1. **Ingest** — the backend clones a GitHub repo, walks the files, and chunks them using AST-aware parsing (tree-sitter). Each chunk is embedded and stored in ChromaDB.
