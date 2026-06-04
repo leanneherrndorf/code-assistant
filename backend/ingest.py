@@ -16,7 +16,7 @@ import git
 
 from chunker import SKIP_DIRS, SKIP_EXTENSIONS, chunk_file
 
-# Shared ChromaDB client (in-memory for demo; swap to PersistentClient for persistence)
+# Shared ChromaDB client — persists to ./chroma_data across backend restarts
 _chroma_client = chromadb.PersistentClient(path="./chroma_data")
 _embedding_fn = DefaultEmbeddingFunction()
 
