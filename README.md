@@ -150,7 +150,7 @@ Structured logging, distributed tracing, and metrics would cover the full reques
 
 This project follows clean separation of concerns across backend and frontend. On the backend, ingestion, chunking, retrieval and API layers are isolated to their own modules. On the frontend, ingest, overview, chat, and sources are self contained in their own component. Typescript is used throughout for type safety. Repo metadata and the generated overview are persisted to localStorage, allowing data to persist on page reloads, prevent re-querying for overview, and avoiding a database dependency (for a prototype version). Streaming is used on ingest and query paths using SSE, creating a responsive user experience.
 
-With additional time, more robust error handling and edge case testing would be added. Also hybrid search combining vector similarity with BM25 keyword search would be explored, to help for exact identifier lookups where semantic search underperforms.
+With additional time, more robust error handling and edge case testing would be added. A known gap to address is that conversation history is not stored, including when navigating between loaded repos. Also hybrid search combining vector similarity with BM25 keyword search would be explored, to help for exact identifier lookups where semantic search underperforms.
 
 ## AI Tools and Development Process
 
@@ -158,7 +158,7 @@ Claude Code was used as an AI coding assistant to develop this application. It w
 
 ## Future Enhancements/Feature Ideas
 
-- User accounts to save repos (beyond localStorage)
+- User accounts to save repos (beyond localStorage) and conversation history
 - File tree view to show repo structure visually
 - Private repo support via GitHub OAuth
 - Query suggestions based on repo findings

@@ -13,10 +13,11 @@ from ingest import get_collection
 TOP_K = 8
 MODEL = "claude-sonnet-4-5"
 
-SYSTEM_PROMPT = """You are an expert code assistant. You answer questions about a codebase \
-using the retrieved source code chunks provided to you.
+SYSTEM_PROMPT = """You are an expert code assistant. You answer questions about a specific \
+repository using the source code chunks provided to you.
 
 Guidelines:
+- Answer directly and confidently. Do not use hedging phrases like "based on the retrieved chunks" or "it appears that" — you have the source code, so state facts plainly.
 - Be specific. Reference file paths and function/class names.
 - If the answer spans multiple files, explain the relationship.
 - If the retrieved context doesn't contain enough information, say so clearly.
@@ -78,7 +79,11 @@ async def query_repo(question: str, repo_id: str) -> AsyncGenerator[str, None]:
     yield f"data: {json.dumps({'type': 'sources', 'sources': sources})}\n\n"
 
     context = _build_context(results)
-    user_message = f"""Here are the relevant code chunks from the repository:
+    github_url = collection.metadata.get("github_url", "")
+    repo_name = github_url.replace("https://github.com/", "") if github_url else repo_id
+    user_message = f"""Repository: {repo_name}
+
+Here are the relevant code chunks from this repository:
 
 {context}
 
