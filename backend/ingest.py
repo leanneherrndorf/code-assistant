@@ -84,7 +84,7 @@ async def ingest_repo(github_url: str) -> AsyncGenerator[dict, None]:
         total_chunks = len(all_entries)
 
         # Embed and upsert in batches
-        UPSERT_BATCH = 200
+        UPSERT_BATCH = 100
         processed_files = sum(1 for r in file_chunk_results if r)
 
         for batch_start in range(0, total_chunks, UPSERT_BATCH):
