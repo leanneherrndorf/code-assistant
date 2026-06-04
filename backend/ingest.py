@@ -51,7 +51,14 @@ async def ingest_repo(github_url: str) -> AsyncGenerator[dict, None]:
 
     try:
         yield {"type": "status", "message": "Cloning repository..."}
-        await asyncio.to_thread(_clone_repo, github_url, tmpdir)
+        try:
+            await asyncio.wait_for(
+                asyncio.to_thread(_clone_repo, github_url, tmpdir),
+                timeout=120,
+            )
+        except asyncio.TimeoutError:
+            yield {"type": "error", "message": "Clone timed out after 120s — repository may be too large. Try a smaller repo."}
+            return
 
         yield {"type": "status", "message": "Scanning files..."}
         files = list(_walk_repo(Path(tmpdir)))
