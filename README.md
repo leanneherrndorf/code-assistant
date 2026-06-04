@@ -111,6 +111,18 @@ Both the ingest and query endpoints use Server-Sent Events (SSE) for real-time s
 
 ## RAG/LLM Approach & Decisions
 
+ChromaDB was chosen as the vector database with the default `all-MiniLM-L6-v2` embedding model. It was chosen for its simplicity: it allows running locally with no external services, and PersistentClient gives data durability with backend restarts. ChromaDB works well for a prototype or single-user dev tool: the default embedding function runs locally via ONNX, requires no API key or cost per embedding during development. Ingestion reads and chunks all files concurrently using `asyncio.gather`, overlapping file I/O across the entire repo before embedding begins. When queried, the top 8 chunks are retrieved by cosine vector similarity and passed to Claude as context, which streams a response token by token via SSE.
+
+The LLM model chosen is Claude Sonnet via the Anthropic SDK. Sonnet handles long context windows well, and produces well-structured technical answers.  
+
+### Future Enhancements
+
+This RAG implementation was focused on a local CPU setup. This is a limitation that slows down the embedding. I would switch to an API-based model such as Voyage `voyage-code-2` (a model purpose-built for code) or OpenAI `text-embedding-3-small`. `all-MiniLM-L6-v2` is a model trained on natural language, not code, so using `voyage-code-2` would enhance recognition of structural code patterns for better repo overview and interpretation. Pinecone or pgvector would be chosen for vector database providers as ChromaDB is not horizontally scalable. Another advantage of moving to a shared vector store is any repo already ingested would not need to be re-ingested, greatly speeding up the user experience for popular repos.
+
+Also, retrieval quality could be enhanced using a reranker. Retrieving the top 20 chunks, then using a cross encoder such as Cohere Rerank to re-score and select the best 8 prior to passing to Claude would enhance answer relevance. The trade off is a small amount of additional latency.
+
+Another enhancement would be incremental ingestion to avoid re-embedding unchanged code. Store the last-ingested commit SHA per repo, and use the GitHub API to fetch only changed files since that commit. Re-embed only the changed chunks, keyed by content hash.
+
 ## Technical Decisions & Engineering standards
 
 ## AI Tools and Development Process
